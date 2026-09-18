@@ -1,0 +1,287 @@
+USER STORY
+Ứng dụng Tra cứu & Quản lý Bài thuốc Bảo vệ Thực vật (AgriRx)
+Nền tảng: Next.js  |  Phiên bản: 0.1 (Draft)  |  Ngày: 18/09/2026
+
+1. Bối cảnh & Ý tưởng mở rộng
+-----------------------------
+Ý tưởng gốc: xây dựng một ứng dụng web (Next.js) để tổng hợp và tra cứu các "bài thuốc" (phác đồ điều trị) dùng để trị bệnh cho cây trồng. Một bài thuốc là tổ hợp nhiều loại thuốc (A, B, C...) được lựa chọn dựa trên: Loại cây → Loại bệnh → Trường hợp đặc biệt (có/không). Admin phụ trách quản trị dữ liệu gốc (cây, bệnh, thuốc) và biên soạn bài thuốc; Staff tra cứu bài thuốc theo nhiều tiêu chí.
+Với kinh nghiệm triển khai các hệ thống tra cứu tri thức chuyên ngành (knowledge base) và hiểu biết về nông nghiệp, tôi đề xuất mở rộng ý tưởng theo các hướng dưới đây trước khi đi vào user story chi tiết:
+
+  1.1. Mô hình dữ liệu đề xuất (mở rộng)
+Ngoài 4 thực thể gốc (Cây, Bệnh, Thuốc, Bài thuốc), đề xuất bổ sung/làm rõ các thực thể sau:
+
+Thực thể | Mô tả / Thuộc tính chính
+Cây trồng (Plant) | Tên thường gọi, tên khoa học, nhóm cây (rau ăn lá, cây ăn quả, cây công nghiệp...), các giai đoạn sinh trưởng (cây con, sinh trưởng, ra hoa, đậu quả, thu hoạch), hình ảnh minh họa.
+Bệnh / Sâu hại (Disease/Pest) | Tên bệnh, nhóm tác nhân (nấm, vi khuẩn, virus, sâu hại, tuyến trùng, thiếu dinh dưỡng...), mô tả triệu chứng, thư viện ảnh triệu chứng, mùa vụ/điều kiện thời tiết thuận lợi cho bệnh phát sinh, mức độ phổ biến.
+Trường hợp đặc biệt (Special Case) | Các điều kiện rẽ nhánh: giai đoạn sinh trưởng, mức độ nặng/nhẹ, canh tác hữu cơ hay hóa học, vùng miền/khí hậu, đất trồng, mật độ sâu bệnh... Mỗi trường hợp là dạng có/không (boolean) hoặc lựa chọn, có thể kết hợp nhiều trường hợp cùng lúc.
+Thuốc (Medicine/Product) | Tên thương mại, hoạt chất, nhóm thuốc (hóa học, sinh học, thảo dược/hữu cơ), nồng độ, liều lượng khuyến cáo, đơn vị pha (ml/lít, g/lít...), thời gian cách ly trước thu hoạch (PHI), độ độc (nhóm độc I-IV), nhà sản xuất, giá tham khảo, trạng thái ngừng kinh doanh.
+Bài thuốc (Remedy/Formula) | Liên kết 1 Cây + 1 Bệnh + N Trường hợp đặc biệt (đã chọn) → danh sách Thuốc kèm tỉ lệ/liều lượng, thứ tự pha trộn, cách phun/bón, tần suất & số lần lặp lại, lưu ý an toàn, trạng thái (nháp/chờ duyệt/đã duyệt/ngừng dùng), phiên bản.
+Phản hồi hiệu quả (Feedback) | Staff ghi nhận kết quả sau khi áp dụng bài thuốc: hiệu quả (%), ảnh thực tế, ghi chú, ngày áp dụng.
+Nhật ký thay đổi (Audit Log) | Ai tạo/sửa/duyệt bài thuốc nào, khi nào — phục vụ truy vết trách nhiệm vì đây là thông tin khuyến cáo dùng thuốc.
+
+
+  1.2. Các tính năng đề xuất bổ sung
+  - Luồng tra cứu dạng "wizard" phân nhánh (Cây → Bệnh → Trường hợp đặc biệt → Bài thuốc), đúng như mô hình gốc nhưng cho phép chọn kết hợp nhiều trường hợp đặc biệt cùng lúc thay vì chỉ 1 nhánh nhị phân.
+  - Tra cứu bằng hình ảnh/triệu chứng: cho các trường hợp Staff không biết tên bệnh, chỉ quan sát được biểu hiện trên cây (rất phổ biến trong thực tế nông nghiệp).
+  - Quy trình phê duyệt (approval workflow) cho bài thuốc: Admin soạn thảo → một Admin/chuyên gia khác duyệt trước khi công khai, tránh rủi ro khuyến cáo sai gây hại cho cây trồng hoặc vi phạm an toàn thực phẩm.
+  - Cảnh báo an toàn & pháp lý: hiển thị thời gian cách ly trước thu hoạch (PHI), nhóm độc, khuyến cáo bảo hộ lao động ngay trên bài thuốc.
+  - Máy tính liều lượng: Staff nhập diện tích/thể tích nước phun → hệ thống tự quy đổi ra lượng thuốc cần pha cho từng loại thuốc trong bài thuốc.
+  - Xuất bài thuốc ra PDF/in để mang theo ra đồng ruộng (nhiều khu vực không có mạng ổn định).
+  - Đánh dấu yêu thích & lịch sử tra cứu cho Staff để truy cập nhanh các bài thuốc dùng thường xuyên.
+  - Phản hồi hiệu quả sau sử dụng: Staff báo cáo lại kết quả thực tế, giúp Admin cải tiến bài thuốc theo thời gian (vòng lặp cải tiến liên tục).
+  - Cảnh báo theo mùa vụ: hệ thống chủ động nhắc Staff về các bệnh có nguy cơ bùng phát theo mùa/thời tiết hiện tại.
+  - Nhập/xuất dữ liệu hàng loạt (Excel/CSV) để Admin di chuyển dữ liệu từ các bảng tính đang dùng hiện tại.
+  - Báo cáo thống kê cho Admin: bệnh được tra cứu nhiều nhất, bài thuốc dùng nhiều nhất, khoảng trống dữ liệu (bệnh chưa có bài thuốc).
+  - Thiết kế responsive/PWA, có thể dùng offline một phần khi Staff ở ngoài đồng.
+
+  1.3. Vai trò người dùng (Actors)
+
+Vai trò | Mô tả quyền hạn
+Admin | Toàn quyền quản trị dữ liệu gốc (Cây, Bệnh, Thuốc, Trường hợp đặc biệt), soạn thảo & xuất bản Bài thuốc, quản lý tài khoản, xem báo cáo thống kê.
+Reviewer / Chuyên gia (đề xuất mới) | Rà soát và phê duyệt bài thuốc do Admin/biên tập viên soạn thảo trước khi công khai (có thể gộp chung quyền với Admin ở giai đoạn đầu nếu team nhỏ).
+Staff | Tra cứu bài thuốc theo cây/bệnh/thuốc/trường hợp đặc biệt, xem chi tiết, tính liều lượng, xuất PDF, đánh dấu yêu thích, gửi phản hồi hiệu quả.
+Khách (Guest) (tuỳ chọn giai đoạn sau) | Xem một phần dữ liệu công khai (không đăng nhập) nếu doanh nghiệp muốn quảng bá tri thức ra cộng đồng.
+
+
+2. Epic 1 — Xác thực & Phân quyền tài khoản
+-------------------------------------------
+US-01 — Đăng nhập hệ thống
+Là người dùng (Admin/Staff), tôi muốn đăng nhập bằng email và mật khẩu, để truy cập vào các chức năng tương ứng với vai trò của mình.
+Độ ưu tiên: Must
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Đăng nhập thành công với thông tin hợp lệ, chuyển hướng đến trang chủ theo vai trò.
+      - Hiển thị thông báo lỗi rõ ràng khi sai email/mật khẩu, không tiết lộ email nào tồn tại trong hệ thống.
+      - Giới hạn số lần đăng nhập sai liên tiếp để chống brute-force.
+      - Phiên đăng nhập hết hạn sau một khoảng thời gian không hoạt động và yêu cầu đăng nhập lại.
+US-02 — Phân quyền theo vai trò (RBAC)
+Là quản trị hệ thống, tôi muốn phân quyền Admin / Staff (và Reviewer nếu có) cho từng tài khoản, để đảm bảo mỗi người chỉ thao tác trong đúng phạm vi được phép.
+Độ ưu tiên: Must
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Staff không thể truy cập các trang quản trị dữ liệu gốc hoặc soạn thảo bài thuốc.
+      - Admin có thể tạo, khóa/mở khóa, đổi vai trò của tài khoản khác.
+      - Mọi thao tác trái quyền trả về lỗi 403 và được ghi log.
+US-03 — Quản lý tài khoản nhân sự
+Là Admin, tôi muốn tạo, chỉnh sửa, vô hiệu hóa tài khoản Staff/Admin khác, để kiểm soát ai được phép sử dụng hệ thống.
+Độ ưu tiên: Should
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Form tạo tài khoản yêu cầu họ tên, email, vai trò; gửi email mời đặt mật khẩu.
+      - Có thể vô hiệu hóa tài khoản mà không xóa dữ liệu lịch sử liên quan (bài thuốc đã tạo, phản hồi đã gửi).
+      - Danh sách tài khoản hỗ trợ tìm kiếm và lọc theo vai trò/trạng thái.
+US-04 — Quên mật khẩu
+Là người dùng, tôi muốn khôi phục mật khẩu qua email khi quên, để tự khôi phục quyền truy cập mà không cần nhờ Admin.
+Độ ưu tiên: Should
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Gửi liên kết đặt lại mật khẩu có hiệu lực trong thời gian giới hạn (vd. 30 phút).
+      - Liên kết chỉ sử dụng được một lần.
+
+3. Epic 2 — Quản lý dữ liệu gốc (Admin)
+---------------------------------------
+US-05 — Quản lý danh mục Cây trồng
+Là Admin, tôi muốn thêm, sửa, xóa (vô hiệu hóa) thông tin Loại cây trồng, để xây dựng danh mục cây trồng làm gốc cho việc tra cứu bài thuốc.
+Độ ưu tiên: Must
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Form nhập tên cây, tên khoa học, nhóm cây, các giai đoạn sinh trưởng, ảnh minh họa.
+      - Không cho xóa vĩnh viễn một Loại cây nếu đã có Bài thuốc liên kết; chỉ cho phép ẩn/ngừng sử dụng.
+      - Tên cây không được trùng lặp trong cùng hệ thống (cảnh báo khi trùng).
+US-06 — Quản lý danh mục Bệnh/Sâu hại
+Là Admin, tôi muốn thêm, sửa, xóa thông tin Loại bệnh và gắn với một hoặc nhiều Loại cây bị ảnh hưởng, để có dữ liệu bệnh chuẩn hóa để xây dựng bài thuốc.
+Độ ưu tiên: Must
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Form nhập tên bệnh, nhóm tác nhân gây bệnh, mô tả triệu chứng, thư viện ảnh triệu chứng (upload nhiều ảnh).
+      - Cho phép gắn thẻ mùa vụ/điều kiện thời tiết thuận lợi để phục vụ cảnh báo theo mùa (Epic 7).
+      - Một bệnh có thể áp dụng cho nhiều loại cây khác nhau.
+US-07 — Quản lý Trường hợp đặc biệt
+Là Admin, tôi muốn định nghĩa các Trường hợp đặc biệt (ví dụ: giai đoạn cây con, mức độ nặng, canh tác hữu cơ...) có thể áp dụng khi rẽ nhánh bài thuốc, để linh hoạt mô hình hóa các tình huống thực tế khác nhau của cùng một cặp Cây–Bệnh.
+Độ ưu tiên: Must
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Mỗi trường hợp đặc biệt có tên, mô tả, và có thể thuộc một nhóm tiêu chí (vd. nhóm "Giai đoạn sinh trưởng", nhóm "Mức độ").
+      - Hỗ trợ đánh dấu một trường hợp là "loại trừ lẫn nhau" trong cùng nhóm (vd. Nhẹ / Vừa / Nặng chỉ chọn 1) hoặc "có thể chọn nhiều" (vd. hữu cơ, có mưa nhiều).
+      - Trường hợp đặc biệt có thể tái sử dụng cho nhiều cặp Cây–Bệnh khác nhau.
+US-08 — Quản lý danh mục Thuốc
+Là Admin, tôi muốn thêm, sửa, xóa thông tin từng loại Thuốc (A, B, C...), để có nguồn dữ liệu thuốc chuẩn để lắp ráp thành các bài thuốc.
+Độ ưu tiên: Must
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Form nhập tên thương mại, hoạt chất, nhóm thuốc (hóa học/sinh học/thảo dược), nồng độ, đơn vị, thời gian cách ly (PHI), nhóm độc, nhà sản xuất, giá tham khảo.
+      - Cảnh báo khi nhập hoạt chất trùng với thuốc đã tồn tại dưới tên thương mại khác (giúp Admin nhận diện thuốc thay thế).
+      - Có thể đánh dấu một Thuốc là "ngừng kinh doanh" — hệ thống cảnh báo tại các Bài thuốc đang sử dụng thuốc đó.
+US-09 — Tìm kiếm & lọc dữ liệu gốc
+Là Admin, tôi muốn tìm kiếm, lọc, sắp xếp danh sách Cây/Bệnh/Thuốc/Trường hợp đặc biệt, để quản lý hiệu quả khi dữ liệu gốc tăng lên nhiều.
+Độ ưu tiên: Should
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Hỗ trợ tìm kiếm theo tên (gõ tới đâu gợi ý tới đó) và lọc theo nhóm/trạng thái.
+      - Danh sách có phân trang và hiển thị số lượng Bài thuốc đang tham chiếu đến từng mục.
+
+4. Epic 3 — Xây dựng & Phê duyệt Bài thuốc
+------------------------------------------
+US-10 — Tạo Bài thuốc mới
+Là Admin, tôi muốn tạo một Bài thuốc bằng cách chọn 1 Cây, 1 Bệnh, 0..N Trường hợp đặc biệt, sau đó thêm danh sách Thuốc kèm liều lượng, để cung cấp phác đồ điều trị đầy đủ cho một tình huống cụ thể.
+Độ ưu tiên: Must
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Wizard tạo bài thuốc theo đúng thứ tự: chọn Cây → chọn Bệnh (đã liên kết với cây đó) → chọn 0..N Trường hợp đặc biệt phù hợp → thêm Thuốc.
+      - Với mỗi Thuốc thêm vào, nhập được liều lượng, đơn vị, thứ tự pha trộn, cách sử dụng, ghi chú riêng.
+      - Hệ thống cảnh báo nếu tổ hợp Cây + Bệnh + Trường hợp đặc biệt giống hệt một Bài thuốc đã tồn tại (tránh trùng lặp).
+      - Bài thuốc mới được lưu ở trạng thái "Nháp" cho đến khi được xuất bản/phê duyệt.
+US-11 — Chỉnh sửa & tạo phiên bản mới cho Bài thuốc
+Là Admin, tôi muốn chỉnh sửa nội dung một Bài thuốc đã tồn tại, để cập nhật khuyến cáo khi có thuốc mới hoặc cải tiến sau phản hồi thực tế.
+Độ ưu tiên: Should
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Mỗi lần chỉnh sửa sau khi đã xuất bản sẽ tạo một phiên bản mới, giữ lại lịch sử phiên bản cũ để tham chiếu.
+      - Staff luôn nhìn thấy bài thuốc ở phiên bản đã duyệt mới nhất, không thấy bản nháp.
+      - Có thể xem so sánh (diff) giữa hai phiên bản.
+US-12 — Gửi phê duyệt & xuất bản Bài thuốc
+Là Admin, tôi muốn gửi Bài thuốc ở trạng thái Nháp đi phê duyệt và xuất bản khi được duyệt, để đảm bảo mọi khuyến cáo thuốc trước khi đến tay Staff đều được kiểm tra chéo.
+Độ ưu tiên: Must
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Chuyển trạng thái Nháp → Chờ duyệt → Đã duyệt/Từ chối; người duyệt không phải chính người tạo (khi có từ 2 Admin trở lên).
+      - Khi Từ chối, người duyệt bắt buộc nhập lý do; Bài thuốc quay về trạng thái Nháp kèm ghi chú.
+      - Chỉ Bài thuốc ở trạng thái Đã duyệt mới hiển thị trong kết quả tra cứu của Staff.
+US-13 — Ngừng sử dụng một Bài thuốc
+Là Admin, tôi muốn đánh dấu một Bài thuốc là ngừng sử dụng (ví dụ do thuốc bị cấm lưu hành), để ngăn Staff áp dụng các khuyến cáo đã lỗi thời hoặc không còn hợp lệ.
+Độ ưu tiên: Should
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Bài thuốc ngừng sử dụng không còn xuất hiện trong kết quả tra cứu mặc định nhưng vẫn truy vết được trong lịch sử/audit log.
+      - Hệ thống gợi ý Admin tạo Bài thuốc thay thế cho cùng tổ hợp Cây–Bệnh–Trường hợp nếu chưa có.
+US-14 — Cảnh báo an toàn tự động trên Bài thuốc
+Là Admin, tôi muốn hệ thống tự động tổng hợp cảnh báo an toàn (thời gian cách ly dài nhất, nhóm độc cao nhất) từ các Thuốc trong Bài thuốc, để Staff luôn thấy được mức độ rủi ro và thời gian cách ly cần tuân thủ mà không cần tự tính toán.
+Độ ưu tiên: Should
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Thời gian cách ly hiển thị trên Bài thuốc = giá trị lớn nhất trong các Thuốc thành phần.
+      - Hiển thị rõ nhãn cảnh báo nếu Bài thuốc chứa Thuốc thuộc nhóm độc cao.
+
+5. Epic 4 — Tra cứu Bài thuốc (Staff)
+-------------------------------------
+US-15 — Tra cứu theo luồng phân nhánh Cây → Bệnh → Trường hợp đặc biệt
+Là Staff, tôi muốn chọn lần lượt Loại cây, sau đó Loại bệnh tương ứng, sau đó các Trường hợp đặc biệt phù hợp với tình huống thực tế, để nhanh chóng thu hẹp kết quả về đúng (các) Bài thuốc phù hợp nhất.
+Độ ưu tiên: Must
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Sau khi chọn Cây, danh sách Bệnh hiển thị chỉ gồm các bệnh đã được gắn với cây đó.
+      - Sau khi chọn Bệnh, hệ thống hiển thị các nhóm Trường hợp đặc biệt liên quan kèm tùy chọn "Không áp dụng/Không rõ".
+      - Kết quả cập nhật theo thời gian thực khi Staff thay đổi lựa chọn ở bất kỳ bước nào.
+      - Nếu không có Bài thuốc khớp chính xác, hệ thống gợi ý Bài thuốc gần đúng nhất (khớp Cây+Bệnh nhưng khác Trường hợp đặc biệt) kèm cảnh báo.
+US-16 — Tìm kiếm nhanh theo từ khóa
+Là Staff, tôi muốn gõ tên cây, tên bệnh hoặc tên thuốc vào ô tìm kiếm, để tìm bài thuốc nhanh khi đã biết trước một phần thông tin, không cần đi hết luồng phân nhánh.
+Độ ưu tiên: Must
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Ô tìm kiếm gợi ý (autocomplete) theo Cây/Bệnh/Thuốc khi gõ.
+      - Kết quả tìm kiếm hiển thị Bài thuốc kèm ngữ cảnh (thuộc Cây nào, Bệnh nào).
+US-17 — Lọc kết quả theo Loại thuốc
+Là Staff, tôi muốn lọc danh sách Bài thuốc theo loại thuốc mong muốn sử dụng (vd. chỉ thuốc sinh học), để ưu tiên các phác đồ phù hợp với định hướng canh tác (hữu cơ, an toàn sinh học...).
+Độ ưu tiên: Should
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Bộ lọc cho phép chọn một hoặc nhiều nhóm thuốc (hóa học/sinh học/thảo dược).
+      - Danh sách kết quả chỉ hiển thị Bài thuốc có ít nhất một Thuốc thuộc nhóm đã chọn, có đánh dấu rõ thuốc nào khớp bộ lọc.
+US-18 — Tra cứu theo hình ảnh/triệu chứng
+Là Staff, tôi muốn duyệt qua thư viện ảnh triệu chứng hoặc tải lên ảnh cây bị bệnh để được gợi ý các Bệnh khả dĩ, để vẫn tìm được bài thuốc phù hợp ngay cả khi không biết tên chính xác của bệnh.
+Độ ưu tiên: Could
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Thư viện ảnh triệu chứng có thể duyệt theo Loại cây, hiển thị ảnh kèm tên bệnh tương ứng.
+      - Khi tải ảnh lên, hệ thống trả về danh sách Bệnh khả nghi được xếp hạng (giai đoạn đầu có thể là gợi ý thủ công do Admin gắn nhãn ảnh mẫu tương tự, chưa cần AI).
+      - Từ kết quả gợi ý, Staff có thể chuyển thẳng sang luồng chọn Trường hợp đặc biệt của bệnh đó.
+US-19 — Đánh dấu Bài thuốc yêu thích
+Là Staff, tôi muốn đánh dấu các Bài thuốc dùng thường xuyên vào danh sách yêu thích, để truy cập nhanh mà không cần lặp lại luồng tra cứu.
+Độ ưu tiên: Could
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Danh sách yêu thích hiển thị ở trang cá nhân, sắp xếp theo lần dùng gần nhất.
+      - Có thể bỏ đánh dấu yêu thích bất kỳ lúc nào.
+US-20 — Lịch sử tra cứu
+Là Staff, tôi muốn xem lại danh sách các Bài thuốc mình đã xem gần đây, để quay lại nhanh một kết quả đã tìm trước đó mà không nhớ chính xác tên.
+Độ ưu tiên: Could
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Lưu tối đa N mục lịch sử gần nhất theo từng tài khoản.
+      - Có tùy chọn xóa lịch sử tra cứu.
+
+6. Epic 5 — Chi tiết Bài thuốc, tính liều lượng & xuất file
+-----------------------------------------------------------
+US-21 — Xem chi tiết Bài thuốc
+Là Staff, tôi muốn xem đầy đủ thông tin một Bài thuốc: danh sách thuốc, liều lượng, thứ tự pha trộn, cách sử dụng, cảnh báo an toàn, để áp dụng đúng và an toàn phác đồ điều trị cho cây trồng.
+Độ ưu tiên: Must
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Trang chi tiết hiển thị rõ từng Thuốc kèm liều lượng, đơn vị, vai trò trong bài thuốc (thuốc chính/thuốc hỗ trợ).
+      - Hiển thị thời gian cách ly (PHI) tổng hợp và cảnh báo nhóm độc nổi bật ở đầu trang.
+      - Hiển thị các Trường hợp đặc biệt áp dụng cho bài thuốc này để Staff xác nhận đúng tình huống.
+US-22 — Tính toán liều lượng theo diện tích/thể tích
+Là Staff, tôi muốn nhập diện tích canh tác hoặc thể tích nước phun thực tế, để hệ thống tự quy đổi ra lượng thuốc cụ thể cần pha cho từng loại thuốc trong bài thuốc.
+Độ ưu tiên: Should
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Nhập diện tích (m2/ha) hoặc số lít nước, hệ thống tính lại số lượng từng Thuốc cần dùng theo tỉ lệ khuyến cáo.
+      - Kết quả tính toán làm tròn hợp lý và hiển thị kèm đơn vị rõ ràng.
+US-23 — Xuất Bài thuốc ra PDF / In
+Là Staff, tôi muốn xuất một Bài thuốc (kèm kết quả tính liều lượng nếu có) ra file PDF hoặc in trực tiếp, để mang theo bản in ra đồng ruộng ở nơi không có kết nối mạng ổn định.
+Độ ưu tiên: Should
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - File PDF trình bày đầy đủ thông tin bài thuốc, cảnh báo an toàn, và liều lượng đã tính (nếu có nhập diện tích).
+      - Bản in tối ưu để đọc rõ trên giấy khổ A4 (không cắt mất nội dung).
+US-24 — Gợi ý thuốc thay thế
+Là Staff, tôi muốn xem gợi ý thuốc thay thế khi một Thuốc trong Bài thuốc đang hết hàng hoặc ngừng kinh doanh, để vẫn thực hiện được phác đồ điều trị khi không mua được đúng sản phẩm khuyến cáo.
+Độ ưu tiên: Could
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Với Thuốc bị đánh dấu ngừng kinh doanh, hệ thống hiển thị các Thuốc khác cùng hoạt chất làm gợi ý thay thế.
+      - Cảnh báo rõ ràng khi không tìm được thuốc thay thế cùng hoạt chất.
+
+7. Epic 6 — Phản hồi & Đánh giá hiệu quả
+----------------------------------------
+US-25 — Gửi phản hồi sau khi áp dụng Bài thuốc
+Là Staff, tôi muốn ghi nhận kết quả thực tế sau khi áp dụng một Bài thuốc (hiệu quả, ảnh thực tế, ghi chú), để đóng góp dữ liệu thực tế giúp cải thiện chất lượng bài thuốc theo thời gian.
+Độ ưu tiên: Should
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Form phản hồi gồm: mức độ hiệu quả (thang điểm hoặc %), ảnh minh chứng (tùy chọn), ghi chú tự do, ngày áp dụng.
+      - Một Staff có thể gửi nhiều phản hồi cho cùng một Bài thuốc ở các lần áp dụng khác nhau.
+US-26 — Xem tổng hợp đánh giá hiệu quả
+Là Admin, tôi muốn xem điểm hiệu quả trung bình và toàn bộ phản hồi của Staff cho từng Bài thuốc, để nhận biết bài thuốc nào đang hoạt động tốt/kém để ưu tiên rà soát, cải tiến.
+Độ ưu tiên: Should
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Trang chi tiết Bài thuốc (view Admin) hiển thị điểm hiệu quả trung bình và số lượng phản hồi.
+      - Có thể lọc/sắp xếp danh sách Bài thuốc theo điểm hiệu quả từ thấp đến cao để ưu tiên xử lý.
+
+8. Epic 7 — Cảnh báo theo mùa vụ
+--------------------------------
+US-27 — Thiết lập điều kiện mùa vụ cho từng Bệnh
+Là Admin, tôi muốn gắn thẻ mùa/điều kiện thời tiết thuận lợi cho từng Loại bệnh (vd. mùa mưa, nhiệt độ cao...), để làm cơ sở dữ liệu để hệ thống chủ động cảnh báo nguy cơ bùng phát bệnh theo mùa.
+Độ ưu tiên: Could
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Mỗi Bệnh có thể gắn một hoặc nhiều thẻ mùa vụ/điều kiện thời tiết.
+      - Dữ liệu này tái sử dụng được cho tính năng cảnh báo (US-28).
+US-28 — Nhận cảnh báo bệnh theo mùa
+Là Staff, tôi muốn nhận thông báo trong ứng dụng về các Bệnh có nguy cơ cao trong mùa vụ/thời điểm hiện tại (theo Loại cây mình phụ trách), để chủ động phòng ngừa thay vì chỉ tra cứu khi cây đã có triệu chứng.
+Độ ưu tiên: Could
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Staff có thể chọn theo dõi một số Loại cây quan tâm trong hồ sơ cá nhân.
+      - Hệ thống hiển thị banner/thông báo các Bệnh có nguy cơ cao theo mùa hiện tại cho các cây đang theo dõi.
+
+9. Epic 8 — Nhập/Xuất dữ liệu hàng loạt & Báo cáo
+-------------------------------------------------
+US-29 — Nhập dữ liệu hàng loạt qua Excel/CSV
+Là Admin, tôi muốn tải lên file Excel/CSV để nhập hàng loạt Cây, Bệnh, Thuốc hoặc Bài thuốc, để tiết kiệm thời gian khi chuyển dữ liệu từ các bảng tính hiện có sang hệ thống.
+Độ ưu tiên: Could
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Cung cấp file mẫu (template) đúng định dạng cho từng loại dữ liệu.
+      - Hệ thống kiểm tra và liệt kê lỗi theo từng dòng trước khi nhập chính thức, không nhập dở dang khi có lỗi.
+US-30 — Xuất báo cáo thống kê sử dụng
+Là Admin, tôi muốn xem báo cáo: Bệnh/Cây được tra cứu nhiều nhất, Bài thuốc dùng nhiều nhất, các cặp Cây–Bệnh chưa có Bài thuốc, để định hướng ưu tiên bổ sung dữ liệu và đánh giá mức độ hữu ích của hệ thống.
+Độ ưu tiên: Could
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Báo cáo có thể lọc theo khoảng thời gian.
+      - Danh sách "khoảng trống dữ liệu" liệt kê các cặp Cây–Bệnh đang được tra cứu nhiều nhưng chưa có Bài thuốc đã duyệt.
+      - Có thể xuất báo cáo ra Excel/PDF.
+US-31 — Ghi nhật ký thao tác (Audit Log)
+Là Admin, tôi muốn xem lịch sử ai đã tạo/sửa/duyệt/ngừng sử dụng đối với từng Bài thuốc và dữ liệu gốc, để truy vết trách nhiệm khi có sai sót trong khuyến cáo sử dụng thuốc.
+Độ ưu tiên: Should
+Tiêu chí chấp nhận (Acceptance Criteria):
+      - Mỗi bản ghi audit log gồm: người thực hiện, hành động, thời gian, dữ liệu trước/sau khi thay đổi (đối với sửa).
+      - Audit log chỉ Admin xem được và không thể chỉnh sửa/xóa thủ công.
+
+10. Yêu cầu phi chức năng (Non-functional Requirements)
+-------------------------------------------------------
+  - Responsive/PWA: giao diện dùng tốt trên điện thoại vì Staff chủ yếu tra cứu ngoài đồng ruộng; hỗ trợ cache dữ liệu đã xem gần nhất để xem lại khi mất mạng.
+  - Hiệu năng: kết quả tra cứu (US-15, US-16) phản hồi dưới 1 giây với bộ dữ liệu tới hàng chục nghìn Bài thuốc.
+  - Bảo mật: mật khẩu được hash, phân quyền kiểm tra ở cả tầng API lẫn giao diện, chống XSS/CSRF/SQL Injection theo OWASP Top 10.
+  - Khả năng mở rộng: mô hình dữ liệu cho phép thêm Loại cây/Bệnh/Thuốc/Trường hợp đặc biệt mới mà không cần thay đổi cấu trúc hệ thống.
+  - Đa ngôn ngữ (tùy chọn giai đoạn sau): sẵn sàng cấu trúc để bổ sung tiếng Anh nếu mở rộng ra thị trường quốc tế.
+  - Sao lưu dữ liệu định kỳ, đặc biệt với dữ liệu Bài thuốc và Audit Log.
+
+11. Ghi chú về phạm vi triển khai (đề xuất)
+-------------------------------------------
+Đề xuất triển khai theo 3 giai đoạn (MoSCoW đã gắn theo từng User Story ở trên):
+  Giai đoạn 1 (MVP – Must): Epic 1, Epic 2, US-10/US-12 (tạo & xuất bản bài thuốc, chưa cần phê duyệt 2 cấp), US-15/US-16/US-21 (tra cứu cơ bản + chi tiết bài thuốc).
+  Giai đoạn 2 (Should): quy trình phê duyệt đầy đủ, tính liều lượng, xuất PDF, lọc theo loại thuốc, phản hồi hiệu quả, audit log.
+  Giai đoạn 3 (Could): tra cứu bằng hình ảnh, cảnh báo theo mùa, yêu thích/lịch sử, nhập liệu hàng loạt, báo cáo thống kê nâng cao, gợi ý thuốc thay thế.

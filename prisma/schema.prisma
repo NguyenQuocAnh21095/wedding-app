@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum DiseaseAgentType {
+  FUNGUS
+  BACTERIA
+  VIRUS
+  PEST
+  NEMATODE
+  NUTRIENT_DEFICIENCY
+  OTHER
+}
+
+enum MedicineGroup {
+  CHEMICAL
+  BIOLOGICAL
+  HERBAL
+}
+
+enum ToxicityClass {
+  I
+  II
+  III
+  IV
+}
+
+enum RemedyStatus {
+  DRAFT
+  PUBLISHED
+  DISCONTINUED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(STAFF)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  remedies Remedy[] @relation("RemedyCreatedBy")
+}
+
+model Plant {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  scientificName String?
+  groupName      String?
+  growthStages   String[]
+  imageUrl       String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  diseases PlantDisease[]
+  remedies Remedy[]
+}
+
+model Disease {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  agentType   DiseaseAgentType @default(OTHER)
+  description String?
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  plants   PlantDisease[]
+  remedies Remedy[]
+}
+
+model PlantDisease {
+  id        String   @id @default(cuid())
+  plantId   String
+  diseaseId String
+  createdAt DateTime @default(now())
+
+  plant   Plant   @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  disease Disease @relation(fields: [diseaseId], references: [id], onDelete: Cascade)
+
+  @@unique([plantId, diseaseId])
+}
+
+model SpecialCaseGroup {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  exclusive Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  cases SpecialCase[]
+}
+
+model SpecialCase {
+  id          String   @id @default(cuid())
+  groupId     String
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  group    SpecialCaseGroup    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  remedies RemedySpecialCase[]
+
+  @@unique([groupId, name])
+}
+
+model Medicine {
+  id               String         @id @default(cuid())
+  name             String         @unique
+  activeIngredient String?
+  groupType        MedicineGroup  @default(CHEMICAL)
+  concentration    String?
+  unit             String?
+  phiDays          Int?
+  toxicityClass    ToxicityClass?
+  manufacturer     String?
+  referencePrice   String?
+  isDiscontinued   Boolean        @default(false)
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  items RemedyItem[]
+}
+
+model Remedy {
+  id                String       @id @default(cuid())
+  name              String?
+  plantId           String
+  diseaseId         String
+  status            RemedyStatus @default(DRAFT)
+  usageInstructions String?
+  notes             String?
+  createdById       String
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  plant        Plant               @relation(fields: [plantId], references: [id])
+  disease      Disease             @relation(fields: [diseaseId], references: [id])
+  createdBy    User                @relation("RemedyCreatedBy", fields: [createdById], references: [id])
+  specialCases RemedySpecialCase[]
+  items        RemedyItem[]
+
+  @@index([plantId, diseaseId])
+}
+
+model RemedySpecialCase {
+  id            String @id @default(cuid())
+  remedyId      String
+  specialCaseId String
+
+  remedy      Remedy      @relation(fields: [remedyId], references: [id], onDelete: Cascade)
+  specialCase SpecialCase @relation(fields: [specialCaseId], references: [id])
+
+  @@unique([remedyId, specialCaseId])
+}
+
+model RemedyItem {
+  id           String  @id @default(cuid())
+  remedyId     String
+  medicineId   String
+  dosageAmount String
+  dosageUnit   String
+  mixOrder     Int     @default(0)
+  usageNote    String?
+
+  remedy   Remedy   @relation(fields: [remedyId], references: [id], onDelete: Cascade)
+  medicine Medicine @relation(fields: [medicineId], references: [id])
+}
