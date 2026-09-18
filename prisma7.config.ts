@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -9,6 +9,9 @@ export default defineConfig({
   },
   datasource: {
     // Migrations need a direct (non-pooled) connection to Neon.
-    url: env("DIRECT_URL"),
+    // Plain process.env (not the strict `env()` helper) so `prisma generate`
+    // — which needs no DB connection — still works in build environments
+    // (e.g. Vercel) where only DATABASE_URL, not DIRECT_URL, is configured.
+    url: process.env.DIRECT_URL ?? process.env.DATABASE_URL,
   },
 });
